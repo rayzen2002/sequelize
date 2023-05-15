@@ -31,7 +31,7 @@ on VSCode terminal, lets start with npm init -y, to create our package.json
 npm init -y
 ```
 
-with our manifest arquive done, lets install our dependencies:
+With our manifest arquive done, lets install our dependencies:
 
 ```jsx
 npm install sequelize pg pg-hstore express
@@ -53,7 +53,7 @@ Lets begin to use the CLI then.
 sequelize-cli init
 ```
 
-after that, a structure will be created to us, structure that will guide us on the process of using Sequelize to interact with our Database.
+After that, a structure will be created to us, structure that will guide us on the process of using Sequelize to interact with our Database.
 
 The first step is changing the arquive config.json, turning it on config.js to pass our Database information.
 
@@ -95,7 +95,8 @@ After that a migration archive will be created, containing two functions, up and
 ```jsx
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('planets', {
+    await queryInterface.createTable('yourtablename', {
+//The columns of your table
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -140,3 +141,103 @@ sequelize db:migrate:undo
 ```
 
 This will drop the table from our Database (using the function down) but our migrate archive will remain untouchable, with represents the concept of a migrate, changing things but preserving our structure which can be used again to create the table with the parameters passed on the up function, making the creation and deletion of tables easier than using pure SQL code.
+
+After our table created, we gonna try to insert values via ORM.
+
+Lets create an archive on config called sequelize.js.
+
+```jsx
+const Sequelize = require ("sequelize");
+const database = require ("./config");
+
+const sequelize = new Sequelize(database);
+
+module.exports = sequelize;
+```
+
+This code will make our instance of database follow the structure of our config archive created back then. Now we gonna create a model that use this new instance builded on the code above. Create a new arquive called YourtableName.js on the models folder.
+
+```jsx
+const { DataTypes } = require ("sequelize");
+const sequelize = require("../config/sequelize");
+
+const YourTableName = sequelize.define("yourtablename" , {
+	name : DataTypes.STRING,
+	position : DataTypes.INTEGER,
+});
+
+module.exports = YourTableName;
+```
+
+To run this code, we gonna create an index.js to test if we are already doing things via sequelize properly.
+
+```jsx
+(async ()=>{
+	const YourTableName = require("./models/YourTableName");
+	
+	const newYourTableName = await YourTableName.create({
+		name : "NameDesiredForColumn",
+		position : "PositionDesiredForColumn"
+
+//The name and position are propertys that I am using on my planets table
+//but here you give the propertys that you need for yours(Remember that
+//everything here are already done on setup archives).
+	})
+})
+```
+
+Now we run on our terminal to test if things are going as we want.
+
+```jsx
+node index.js
+```
+
+If everything is ok, we have now a table called yourtablename with the data of our index.js archive on our Database, created via Sequelize. 
+
+Now we gonna try to consult our Data via Sequelize.
+
+```jsx
+(async ()=>{
+	const YourTableName = require("./models/YourTableName");
+	
+	//const newYourTableName = await yourtablename.create({
+	//	name : "NameDesiredForColumn",
+	//	position : "PositionDesiredForColumn"
+	// Comment this part to dont create another row on your 
+	// table.
+	const seeYourTableName = await YourTableName.findAll();
+
+	console.log(seeYourTableName);
+
+	})
+})
+```
+
+This will replace the Querie Select * FROM yourtablename and will show our data on the console.
+
+We can use findByPk() Method instead of findAll() to filter with primary key. We can do refined search like on SQL, doing this.
+
+```jsx
+const seeYourTableName = await YourTableName.findAll({
+	where : {
+		property : value, //Syntax similar to WHERE on SQL
+};
+});
+```
+
+We are on the middle of our CRUD now, we can Create and Read already, now lets wrap to the Update part and after the Delete one.
+
+```jsx
+const updateYourTableName = await YourTableName.findByPk(id);
+updateYourTableName.property = newValue;
+await updateYourTableName.save();
+```
+
+To complete our CRUD we gonna do the Delete part now.
+
+```jsx
+const deleteYourTableName = await YourTableName.findByPk(id);
+await deleteYourTableName.destroy();
+```
+
+And then our CRUD is finished.
